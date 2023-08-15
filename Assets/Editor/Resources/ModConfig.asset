@@ -14,7 +14,8 @@ MonoBehaviour:
   id: BlackoutModule
   title: Blackout
   author: Quinn Wuest
-  description: Blackout
+  description: "Even the flavour text is black!\n\nMade by Quinn Wuest\n\n[url=https://ktane.timwi.de/HTML/Blackout.html]Manual
+    HTML[/url]\r\n[url=https://ktane.timwi.de/PDF/Blackout.pdf]Manual PDF[/url]"
   version: 1.0
   outputFolder: build
   previewImage: {fileID: 2800000, guid: bd5c1f4881f57d54481b44e4c8a7779a, type: 3}

@@ -59,6 +59,7 @@ public class BlackoutScript : MonoBehaviour
     private bool _requirePress;
     private bool _successfullyPressed;
     private bool _colorblindMode;
+    private bool _isAutosolving;
 
     private void Start()
     {
@@ -101,8 +102,9 @@ public class BlackoutScript : MonoBehaviour
             if (_pressAnimation != null)
                 StopCoroutine(_pressAnimation);
             _pressAnimation = StartCoroutine(PressAnimation());
-            Module.HandleStrike();
             Debug.LogFormat("[Blackout #{0}] The screen was pressed when a blackout was not present. Strike.", _moduleId);
+            Audio.PlaySoundAtTransform(string.Format(@"{0}out", _colorNames[_internalColor].ToLowerInvariant()), transform);
+            Module.HandleStrike();
             return false;
         }
         if (_requirePress && !_successfullyPressed)
@@ -110,6 +112,7 @@ public class BlackoutScript : MonoBehaviour
             if (_pressAnimation != null)
                 StopCoroutine(_pressAnimation);
             _pressAnimation = StartCoroutine(PressAnimation());
+            Audio.PlaySoundAtTransform("blackout", transform);
             _successfullyPressed = true;
             Debug.LogFormat("[Blackout #{0}] The screen was correctly pressed when a blackout was present.", _moduleId);
         }
@@ -167,17 +170,21 @@ public class BlackoutScript : MonoBehaviour
                 _moduleSolved = true;
                 _internalColor = 0;
                 StartCoroutine(PressAnimation());
-                Module.HandlePass();
                 Debug.LogFormat("[Blackout #{0}] ===================================", _moduleId);
                 Debug.LogFormat("[Blackout #{0}] Last stage reached. Module solved.", _moduleId);
                 StartCoroutine(FadeColor(_displayedColor, 0));
+                Audio.PlaySoundAtTransform("blackout", transform);
+                Module.HandlePass();
                 return;
             }
             if (_requirePress && !_successfullyPressed)
             {
-                Module.HandleStrike();
                 Debug.LogFormat("[Blackout #{0}] A blackout was present, but the screen was not pressed. Strike.", _moduleId);
+                Audio.PlaySoundAtTransform("oh_no", transform);
+                Module.HandleStrike();
             }
+            else if (!_isAutosolving)
+                Audio.PlaySoundAtTransform("okay", transform);
             _successfullyPressed = false;
             SurfaceText.text = solvedModules.Count.ToString();
             var lastsolved = GetLastSolve(solvedModules, _currentSolves);
@@ -269,7 +276,7 @@ public class BlackoutScript : MonoBehaviour
 
     private IEnumerator ProcessTwitchCommand(string command)
     {
-        var m = Regex.Match(command, @"^\s*colou?rblind|cb\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var m = Regex.Match(command, @"^\s*(colou?rblind|cb)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         if (m.Success)
         {
             yield return null;
@@ -277,7 +284,7 @@ public class BlackoutScript : MonoBehaviour
             ColorblindText.gameObject.SetActive(_colorblindMode);
             yield break;
         }
-        m = Regex.Match(command, @"^\s*push|press|submit\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        m = Regex.Match(command, @"^\s*(push|press|submit)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         if (!m.Success)
             yield break;
         yield return null;
@@ -288,6 +295,7 @@ public class BlackoutScript : MonoBehaviour
 
     private IEnumerator TwitchHandleForcedSolve()
     {
+        _isAutosolving = true;
         while (!_moduleSolved)
         {
             if (_requirePress && !_successfullyPressed)
