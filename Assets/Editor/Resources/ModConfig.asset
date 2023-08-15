@@ -18,4 +18,4 @@ MonoBehaviour:
     HTML[/url]\r\n[url=https://ktane.timwi.de/PDF/Blackout.pdf]Manual PDF[/url]"
   version: 1.0
   outputFolder: build
-  previewImage: {fileID: 2800000, guid: bd5c1f4881f57d54481b44e4c8a7779a, type: 3}
+  previewImage: {fileID: 2800000, guid: c863e53d5d5f3674bbeff33ac7e54cf5, type: 3}
