@@ -293,7 +293,12 @@ public class BlackoutScript : MonoBehaviour
         Sel.OnInteract();
     }
 
-    private IEnumerator TwitchHandleForcedSolve()
+    private void TwitchHandleForcedSolve()
+    {
+        StartCoroutine(AutoSolve());
+    }
+
+    private IEnumerator AutoSolve()
     {
         _isAutosolving = true;
         while (!_moduleSolved)
