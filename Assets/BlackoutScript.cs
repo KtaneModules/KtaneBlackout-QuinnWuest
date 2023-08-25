@@ -55,7 +55,7 @@ public class BlackoutScript : MonoBehaviour
     private static readonly string[] _colorNames = new string[8] { "BLACK", "BLUE", "GREEN", "CYAN", "RED", "MAGENTA", "YELLOW", "WHITE" };
     private Coroutine _fadeAnimation;
     private Coroutine _pressAnimation;
-    private LogicGate _currentLogicGate = LogicGate.XOR;
+    private LogicGate _currentLogicGate = LogicGate.OR;
     private bool _requirePress;
     private bool _successfullyPressed;
     private bool _colorblindMode;
@@ -185,6 +185,7 @@ public class BlackoutScript : MonoBehaviour
             }
             else if (!_isAutosolving)
                 Audio.PlaySoundAtTransform("okay", transform);
+            solvedModules = BombInfo.GetSolvedModuleNames();
             _successfullyPressed = false;
             SurfaceText.text = solvedModules.Count.ToString();
             var lastsolved = GetLastSolve(solvedModules, _currentSolves);
@@ -196,7 +197,7 @@ public class BlackoutScript : MonoBehaviour
             ColorblindText.text = _colorNames[_displayedColor];
             _internalColor = GetNewColor(oldInternalColor, _displayedColor, _currentLogicGate);
             Debug.LogFormat("[Blackout #{0}] ===================================", _moduleId);
-            Debug.LogFormat("[Blackout #{0}] Stage {1}: {2} was chosen.", _moduleId, solvedModules.Count, _colorNames[_displayedColor]);
+            Debug.LogFormat("[Blackout #{0}] Stage {1}: {2} was chosen.", _moduleId, BombInfo.GetSolvedModuleNames().Count(), _colorNames[_displayedColor]);
             Debug.LogFormat("[Blackout #{0}] The last solved module was {1}.", _moduleId, lastsolved);
             Debug.LogFormat("[Blackout #{0}] The logic gate for this stage is {1}.", _moduleId, _currentLogicGate);
             Debug.LogFormat("[Blackout #{0}] Applying {1} and {2} using {3} results in {4}.", _moduleId, _colorNames[oldInternalColor], _colorNames[_displayedColor], _currentLogicGate, _colorNames[_internalColor]);
