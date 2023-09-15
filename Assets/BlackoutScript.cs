@@ -8,6 +8,7 @@ using Rnd = UnityEngine.Random;
 using KModkit;
 using System.Text;
 using System.Globalization;
+using UnityEngine.Analytics;
 
 public class BlackoutScript : MonoBehaviour
 {
@@ -190,7 +191,8 @@ public class BlackoutScript : MonoBehaviour
             SurfaceText.text = solvedModules.Count.ToString();
             var lastsolved = GetLastSolve(solvedModules, _currentSolves);
             var lastSolveReformatted = ReformatModName(lastsolved);
-            _currentLogicGate = GetLogicGate(lastSolveReformatted);
+            var logicInfo = GetLogicGate(lastSolveReformatted);
+            _currentLogicGate = logicInfo.Gate;
             var oldInternalColor = _internalColor;
             var oldDisplayedColor = _displayedColor;
             _displayedColor = Rnd.Range(0, 8);
@@ -199,7 +201,12 @@ public class BlackoutScript : MonoBehaviour
             Debug.LogFormat("[Blackout #{0}] ===================================", _moduleId);
             Debug.LogFormat("[Blackout #{0}] Stage {1}: {2} was chosen.", _moduleId, BombInfo.GetSolvedModuleNames().Count(), _colorNames[_displayedColor]);
             Debug.LogFormat("[Blackout #{0}] The last solved module was {1}.", _moduleId, lastsolved);
-            Debug.LogFormat("[Blackout #{0}] The logic gate for this stage is {1}.", _moduleId, _currentLogicGate);
+            if (logicInfo.Rule == 0)
+                Debug.LogFormat("[Blackout #{0}] {1} directly contains the logic gate {2}.", _moduleId, lastsolved, _currentLogicGate);
+            else if (logicInfo.Rule == 1)
+                Debug.LogFormat("[Blackout #{0}] {1} contains the letters of the logic gate {2} in order.", _moduleId, lastsolved, _currentLogicGate);
+            else if (logicInfo.Rule == 2)
+                Debug.LogFormat("[Blackout #{0}] {1} does not contain a logic gate name. The logic gate to use this stage is {2}.", _moduleId, lastsolved, _currentLogicGate);
             Debug.LogFormat("[Blackout #{0}] Applying {1} and {2} using {3} results in {4}.", _moduleId, _colorNames[oldInternalColor], _colorNames[_displayedColor], _currentLogicGate, _colorNames[_internalColor]);
             if (_internalColor == 0)
             {
@@ -238,22 +245,45 @@ public class BlackoutScript : MonoBehaviour
         return str;
     }
 
-    private LogicGate GetLogicGate(string modName)
+    public struct LogicInfo
+    {
+        public LogicGate Gate { get; private set; }
+        public int Rule { get; private set; }
+
+        public LogicInfo(LogicGate gate, int rule)
+        {
+            Gate = gate;
+            Rule = rule;
+        }
+    }
+
+    private LogicInfo GetLogicGate(string modName)
     {
         for (int i = 0; i < 5; i++)
         {
             var logic = (LogicGate)i;
             if (modName.Contains(logic.ToString()))
-                return logic;
+                return new LogicInfo(logic, 0);
         }
         for (int i = 0; i < 5; i++)
         {
             var logic = ((LogicGate)i).ToString();
-            var ixs = Enumerable.Range(0, logic.Length).Select(ix => modName.IndexOf(logic[ix])).ToArray();
-            if (ixs.OrderBy(x => x).SequenceEqual(ixs) && ixs.Distinct().Count() == ixs.Count() && ixs[0] != -1)
-                return (LogicGate)i;
+            var m = modName;
+            for (int l = 0; l <= logic.Length; l++)
+            {
+                if (l == logic.Length)
+                    return new LogicInfo((LogicGate)i, 1);
+                int ix = m.IndexOf(logic[l]);
+                if (ix == -1)
+                    goto nextIter;
+                m = m.Substring(ix);
+            }
+            nextIter:;
+            // var ixs = Enumerable.Range(0, logic.Length).Select(ix => modName.IndexOf(logic[ix])).ToArray();
+            // if (ixs.OrderBy(x => x).SequenceEqual(ixs) && ixs.Distinct().Count() == ixs.Count() && ixs[0] != -1)
+            //     return (LogicGate)i;
         }
-        return (LogicGate)(((int)_currentLogicGate + 1) % 5);
+        return new LogicInfo((LogicGate)(((int)_currentLogicGate + 1) % 5), 2);
     }
 
     private int GetNewColor(int colorA, int colorB, LogicGate logic)
